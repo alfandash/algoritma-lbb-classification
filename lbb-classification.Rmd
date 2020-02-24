@@ -341,3 +341,11 @@ Our target or goals is to predict survivor and to create a model that predicts w
 Based on result before and after improvement model, Logistic regression perform more better in every aspect than K-NN model. Logistic Regression model we have improve using step wise method get better and highest accuracy and other aspect.
 
 So, the result we can use Logistic regression to precit "Survivor" of Titanic shipwreck
+
+# Source Code
+
+This analysis made for education purpose, and creator make it public access for data and source code.
+
+File can access and download in Github: [alfandash github](https://github.com/alfandash/algoritma-lbb-classification)
+
+Result of this rmardown can access in RPubs: [alfandash rpubs](https://rpubs.com/alfandash/lbb-classification)

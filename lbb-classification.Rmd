@@ -1,0 +1,343 @@
+---
+title: "Titanic Survivor Predict Analysis using Logistic Regression and K-NN Model"
+author: "Alfan"
+date: "2/21/2020"
+output: 
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float:
+      collapsed: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 999)
+```
+
+
+# Intro
+
+## What We'll Do
+
+We will try to do a titanic analysis and classify survivor based on dataset we get from this [link](https://www.kaggle.com/c/titanic). We will use Logistic Refression and K-Nearest Neighbor (K-NN) method as classification method.
+
+## Goals
+
+Predict survivor and to create a model that predicts which passengers survived the Titanic shipwreck. In this case we will target "Survived" and using other columns as Predictor Variable
+
+
+# Data Prepartion
+
+Load required package
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(car)
+# Knn modelling
+library(class)
+# Confussion Mtrix
+library(caret)
+```
+
+As we know the dataset get from [link](https://www.kaggle.com/c/titanic). The dataset consist of file, gender_submission.csv contain survived status and passanger id, train.csv and test.csv both of it contain passanger biodata but it already seperate for train and test data
+
+```{r}
+submission <- read.csv("data/gender_submission.csv")
+rmarkdown::paged_table(submission)
+```
+
+```{r}
+train_titanic <- read.csv("data/train.csv")
+rmarkdown::paged_table(train_titanic)
+```
+
+```{r}
+test_titanic <- read.csv("data/test.csv")
+rmarkdown::paged_table(test_titanic)
+```
+
+Here is data dictionary:
+
+```{r echo=FALSE}
+columns <- c("survive","pclass","sex","age","sibsp","parch","ticket","fare","cabin","embarked")
+descriptions <- c("Survival status (0 = No, 1 = Yes)","Ticket class (1 = 1st, 2 = 2nd, 3 = 3rd)","Sex","Age in years	","# of siblings / spouses aboard the Titanic	","# of parents / children aboard the Titanic	","Ticket number	","Passenger fare	","Cabin number	","Port of Embarkation	(C = Cherbourg, Q = Queenstown, S = Southampton)")
+dictionary <- data.frame(columns, descriptions)
+rmarkdown::paged_table(dictionary)
+```
+
+Although based on the information we read at the source, that the dataset provided has been prepared properly. Explore data its must. After import the data, some variable have incorrect class and need to manipulate it and we do it to both train and test data
+
+```{r}
+submission <- submission %>% 
+  mutate(PassengerId = as.factor(PassengerId))
+
+test_titanic <- test_titanic %>% 
+  mutate(PassengerId = as.factor(PassengerId),
+         Pclass = as.factor(Pclass),
+         Name = as.character(Name),
+         Age = as.integer(Age))
+
+train_titanic <- train_titanic %>% 
+  mutate(PassengerId = as.factor(PassengerId),
+         Survived = as.factor(Survived),
+         Pclass = as.factor(Pclass),
+         Name = as.character(Name),
+         Age = as.integer(Age))
+```
+
+there is some different between test and train data, test dont have survived variable. we can found this variable on submission data. so we can join it based on passanger id 
+
+```{r}
+test_titanic <- inner_join(test_titanic, submission) %>% 
+  mutate(Survived = as.factor(Survived))
+
+```
+
+
+NA Check to all data, we found age variabel have NA value.
+
+```{r}
+colSums(is.na(test_titanic))
+nrow(test_titanic)
+```
+
+```{r}
+colSums(is.na(train_titanic))
+nrow(train_titanic)
+```
+
+At first we will Handling this missing data with deleting columns / observer. Before test titanic have 418 row it filtered to 332 row and train_titanic have 891 row it filtered to 714 rows
+
+```{r}
+test_titanic <- test_titanic %>% 
+  filter(!is.na(Age)) %>% 
+  na.omit()
+
+train_titanic <- train_titanic %>% 
+  filter(!is.na(Age))
+```
+
+# Explatory Data Analysis
+
+
+In Survived variabel we found binary "0" and "1" to explain whether passanger survived or not. To make it moe clear we will label "1" > "yes" and "0" > "no"
+
+```{r}
+test_titanic <- test_titanic %>% 
+  mutate(Survived = as.factor(ifelse(Survived == 1, "yes", "no")))
+
+train_titanic <- train_titanic %>% 
+  mutate(Survived = as.factor(ifelse(Survived == 1, "yes", "no")))
+```
+
+Multicollinearity based on data dictionary, and didnt found any related variable. 
+
+```{r}
+glimpse(test_titanic)
+```
+
+Some of our varible will not use in our modelling becuase it didnt have related with our target variable.
+
+```{r}
+#take out Name and Cabin varible 
+
+test_titanic <- test_titanic %>% 
+  select(-c(PassengerId,Ticket,Name,Cabin))
+
+train_titanic <- train_titanic %>% 
+  select(-c(PassengerId,Ticket,Name,Cabin))
+
+which(is.na(test_titanic))
+
+test_titanic[2778,]
+
+```
+
+Before train model, our data we get from source have seperate into Train and Test data. We should check whether proportion total data from each train and test compare with total data. We get train have more total row then test data, and proportion si train 68% and test is 32%, so we doesnt need to re-make data-frame
+
+```{r}
+#total row data
+total_row <- nrow(test_titanic) + nrow(train_titanic)
+#Test data compare total row data
+round((nrow(test_titanic) / total_row) * 100, 3)
+#Train data compare total row data
+round((nrow(train_titanic) / total_row) * 100, 3)
+```
+
+Check proportion of survive status from passanger of train data, we get that proportion of variable survive is balance
+
+```{r}
+prop.table(table(train_titanic$Survived))
+```
+
+```{r}
+table(train_titanic$Survived)
+```
+
+
+# Modelling
+
+## logistic regressin
+
+We will train logistic regression model. at first we will use all our variabel inside train data frame, and use Survived as target.
+
+```{r}
+logres_model_all <- glm(formula = Survived ~ . ,data = train_titanic, family = "binomial")
+summary(logres_model_all)
+```
+
+## K-NN
+
+K-NN classify by looking the nearest data-points we want to classify with their neighbour
+
+```{r}
+# separate target variable
+train_x <- train_titanic %>% 
+  select(-c(Survived, Pclass, Sex, Embarked))
+
+test_x <- test_titanic %>% 
+  select(-c(Survived, Pclass, Sex, Embarked))
+
+train_y <- train_titanic %>% 
+  select(c(Survived))
+
+test_y <- test_titanic %>% 
+  select(c(Survived))
+```
+
+```{r}
+train_p <- scale(x = train_x, center = T)
+test_p <- scale(x = test_x,
+                center = attr(train_p, "scaled:center"),
+                scale = attr(train_p, "scaled:scale")
+                )
+
+```
+
+
+```{r}
+
+knn_survivor_pred <- knn(train = train_p,
+                         test = test_p,
+                         cl = train_y$Survived,
+                         k = 1)
+```
+
+
+# Evalution
+
+## Logisitic Regression
+
+We have make our logistic regression using all predict variable on dataset. Next this model use to predict with train dataset.
+
+```{r}
+logres_survivor_pred <- predict(logres_model_all, newdata = test_titanic, type = "response")
+
+rmarkdown::paged_table(head(as.data.frame(logres_survivor_pred), 20))
+```
+
+Based on result, we will convert probablity into class using threshold value (by default we will put 0.5 as threshold value). Using confusion matrix to see predict using our model compare test data we have prepare before 
+
+```{r}
+logres_survivor_pred <- as.factor(if_else(logres_survivor_pred > 0.5, "yes", "no"))
+
+confusionMatrix(data = logres_survivor_pred,
+                reference = as.factor(test_y$Survived),
+                positive = "yes")
+```
+
+The result show that result our prediction on test dataset using logistic regression model is 90.33% for accuracy, it mean that our result data prediction 90,33% is correctly classified. Precision/positive predicted value around 86.26%, mean thath 86.26% of our positive prediction is correctly classified. Value of sensitivity is 88.98% and specificity 88.98%, this indicate positive and negative predict correctly classified range  around 86-88%, this model really have high performance for our predction that we need. 
+
+## K-NN
+
+```{r}
+confusionMatrix(data = knn_survivor_pred,
+                reference = as.factor(test_y$Survived),
+                positive = "yes")
+
+```
+
+The result show that result our prediction on test dataset using K-NN model using K = 1 is 57.7% accuracy, it mean that our result data prediction 57,7% is correctly classified. Precision/positive predicted value around 45.52%, mean thath 45.52% of our positive prediction is correctly classified. Value of sensitivity is 51.9% and specificity 61.27%, this indicate positive and negative predict correctly classified range  around 50-60% 
+
+
+# Model Improvement 
+
+## Logistic Regression
+
+Based on confussion matrix logistic regression we made before, get good result to predict survivor. We still try to improve model model so it can fitting more better, on this case we will use step wise method.
+
+Prepare none model 
+
+```{r}
+logres_model_none <- glm(formula = Survived ~ 1 ,data = train_titanic, family = "binomial")
+```
+
+
+Backward eliminate, from all predictor we use in model, it will eliminate one by one from model. Result will give us suggestion best model with best lower model
+
+```{r}
+step(object = logres_model_all, direction = "backward", trace = 0)
+```
+
+Both elimination, it combine backward and forward method to get best lower AIC model that fit to our prediction
+
+```{r}
+step(object = logres_model_all, scope = list(lower = logres_model_none, upper = logres_model_all), direction = "both", trace = 0)
+```
+
+Found that based on backward and both eliminate method, model they suggest is "glm(formula = Survived ~ Pclass + Sex + Age + SibSp, family = "binomial". let try to use this model to predict
+
+```{r}
+logres_model_stepwise = glm(formula = Survived ~ Pclass + Sex + Age + SibSp, family = "binomial", data = train_titanic)
+
+logres_survivor_pred_2 <- predict(logres_model_stepwise, newdata = test_titanic, type = "response")
+
+logres_survivor_pred_2 <- as.factor(if_else(logres_survivor_pred_2 > 0.5, "yes", "no"))
+
+confusionMatrix(data = logres_survivor_pred_2,
+                reference = as.factor(test_y$Survived),
+                positive = "yes")
+
+```
+
+Based this result, we compare with previos logistic regression model we made, the accuracy increase from 90.33% to 92.15%, Precision increase from 86.26% to 87.97% and sensitivity increase from 88.98% to 92.13%
+
+
+## K-NN 
+
+By default on K-NN model we use K = 1. To improve it will use optimum K using this method, we get that our optimum k is 27
+
+```{r}
+optimum_k = round(sqrt(nrow(train_p)))
+optimum_k
+```
+
+implement optimum K in K-NN model, we will using same test dataset to make apple-to-apple comparisson. 
+
+```{r}
+knn_survivor_pred <- knn(train = train_p,
+                         test = test_p,
+                         cl = train_y$Survived,
+                         k = optimum_k)
+```
+
+Using confusion matrix to summarise result our K-NN model
+
+```{r}
+confusionMatrix(data = knn_survivor_pred,
+                reference = as.factor(test_y$Survived),
+                positive = "yes")
+
+```
+
+The result show that result our prediction on test dataset using K-NN model using optimum K is 27. Compare with last K-NN we made using K = 1. Accuracy increase from 57.7% to 64.65%, precision/positive predicted value increase from 45.52% to 54.46%, and sensitivty decrease from 51.9% to 48.03% but specificity increase from 61.27% to 75%
+
+# Conculusion
+
+Our target or goals is to predict survivor and to create a model that predicts which passengers survived the Titanic shipwreck. In this case we will target "Survived" and using other columns as Predictor Variable. There isnt specific explaination which more priority from our source, recall or precision, so in this case we will find highest accurcacy model. In the other hand, this titanic case didnt restrict how many variable we can use or didnt explain we cant delete some varible.
+
+Based on result before and after improvement model, Logistic regression perform more better in every aspect than K-NN model. Logistic Regression model we have improve using step wise method get better and highest accuracy and other aspect.
+
+So, the result we can use Logistic regression to precit "Survivor" of Titanic shipwreck

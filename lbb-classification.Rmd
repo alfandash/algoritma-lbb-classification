@@ -134,7 +134,7 @@ train_titanic <- train_titanic %>%
 # Explatory Data Analysis
 
 
-In Survived variabel we found binary "0" and "1" to explain whether passanger survived or not. To make it moe clear we will label "1" > "yes" and "0" > "no"
+In Survived variabel we found binary "0" and "1" to explain whether passanger survived or not. To make it more clear we will label "1" > "yes" and "0" > "no"
 
 ```{r}
 test_titanic <- test_titanic %>% 
@@ -150,7 +150,7 @@ Multicollinearity based on data dictionary, and didnt found any related variable
 glimpse(test_titanic)
 ```
 
-Some of our varible will not use in our modelling becuase it didnt have related with our target variable.
+Some of our varible will not use in our modelling because it didnt have related with our target variable.
 
 ```{r}
 #take out Name and Cabin varible 
@@ -264,7 +264,7 @@ logres_survivor_pred <- predict(logres_model_all, newdata = test_titanic, type =
 rmarkdown::paged_table(head(as.data.frame(logres_survivor_pred), 20))
 ```
 
-Based on result, we will convert probablity into class using threshold value (by default we will put 0.5 as threshold value). Using confusion matrix to see predict using our model compare test data we have prepare before 
+Based on result, we will convert probabilty into class using threshold value (by default we will put 0.5 as threshold value). Using confusion matrix to see predict using our model compare test data we have prepare before 
 
 ```{r}
 logres_survivor_pred <- as.factor(if_else(logres_survivor_pred > 0.5, "yes", "no"))
@@ -274,7 +274,7 @@ confusionMatrix(data = logres_survivor_pred,
                 positive = "yes")
 ```
 
-The result show that result our prediction on test dataset using logistic regression model is 90.33% for accuracy, it mean that our result data prediction 90,33% is correctly classified. Precision/positive predicted value around 86.26%, mean thath 86.26% of our positive prediction is correctly classified. Value of sensitivity is 88.98% and specificity 88.98%, this indicate positive and negative predict correctly classified range  around 86-88%, this model really have high performance for our predction that we need. 
+The result show that result our prediction on test dataset using logistic regression model is 90.33% for accuracy, it mean that our result data prediction 90,33% is correctly classified. Precision/positive predicted value around 86.26%, mean thath 86.26% of our positive prediction is correctly classified. Value of sensitivity is 88.98% and specificity 88.98%, this indicate positive and negative predict correctly classified range  around 86-88%, this model really have high performance for our prediction that we need. 
 
 ## K-NN
 
@@ -328,7 +328,7 @@ confusionMatrix(data = logres_survivor_pred_2,
 
 ```
 
-Based this result, we compare with previos logistic regression model we made, the accuracy increase from 90.33% to 92.15%, Precision increase from 86.26% to 87.97% and sensitivity increase from 88.98% to 92.13%
+Based this result, we compare with previous logistic regression model we made, the accuracy increase from 90.33% to 92.15%, Precision increase from 86.26% to 87.97% and sensitivity increase from 88.98% to 92.13%
 
 
 ## K-NN 
@@ -362,7 +362,7 @@ The result show that result our prediction on test dataset using K-NN model usin
 
 # Conculusion
 
-Our target or goals is to predict survivor and to create a model that predicts which passengers survived the Titanic shipwreck. In this case we will target "Survived" and using other columns as Predictor Variable. There isnt specific explaination which more priority from our source, recall or precision, so in this case we will find highest accurcacy model. In the other hand, this titanic case didnt restrict how many variable we can use or didnt explain we cant delete some varible.
+Our target or goals is to predict survivor and to create a model that predicts which passengers survived the Titanic shipwreck. In this case we will target "Survived" and using other columns as Predictor Variable. There isnt specific explaination which more priority from our source, recall or precision, so in this case we will find highest accuracy model. In the other hand, this titanic case didnt restrict how many variable we can use or didnt explain we cant delete some varible.
 
 Based on result before and after improvement model, Logistic regression perform more better in every aspect than K-NN model. Logistic Regression model we have improve using step wise method get better and highest accuracy and other aspect.
 

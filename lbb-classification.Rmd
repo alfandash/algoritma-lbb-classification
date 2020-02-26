@@ -20,11 +20,23 @@ options(scipen = 999)
 
 ## What We'll Do
 
-We will try to do a titanic analysis and classify survivor based on dataset we get from this [link](https://www.kaggle.com/c/titanic). We will use Logistic Refression and K-Nearest Neighbor (K-NN) method as classification method.
+The sinking of the Titanic is one of the most infamous shipwrecks in history.
 
-## Goals
+On April 15, 1912, during her maiden voyage, the widely considered “unsinkable” RMS Titanic sank after colliding with an iceberg. Unfortunately, there weren’t enough lifeboats for everyone onboard, resulting in the death of 1502 out of 2224 passengers and crew.
 
-Predict survivor and to create a model that predicts which passengers survived the Titanic shipwreck. In this case we will target "Survived" and using other columns as Predictor Variable
+While there was some element of luck involved in surviving, it seems some groups of people were more likely to survive than others.
+
+There is lot of method to predict, who have more possibility to survive. so in this case we want to compare Logistic Regression and K-NN method to predict who can survive frim Titanic shipwreck, and which method have better performance?
+
+## How To do
+
+Predict survivor and to create a model that predicts which passengers survived the Titanic shipwreck. In this case we will target "Survived" and using other columns as Predictor Variable.
+
+We will try to do a titanic analysis and classify survivor based on dataset we get from this [link](https://www.kaggle.com/c/titanic). 
+
+We will use Logistic Refression and K-Nearest Neighbor (K-NN) method as classification method and predict survivor. We will compare perfomance between this method.
+
+We will use Confussion Metrics to evaluate the models, and based on result of confussion matrix we will compare the perfomance between them.
 
 
 # Data Prepartion

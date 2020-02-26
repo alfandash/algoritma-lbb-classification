@@ -240,6 +240,20 @@ knn_survivor_pred <- knn(train = train_p,
 
 # Evalution
 
+Evaluation of the model will be done with confusion matrix. Confusion matrix is a table that shows four different category: True Positive, True Negative, False Positive, and False Negative.
+
+
+```{r fig.align="center", echo=FALSE}
+knitr::include_graphics("./images/confussion_matrix.png")
+```
+
+The performance will be the Accuracy, Sensitivity/Recall, Specificity, and Precision. Accuracy measures how many of our data is correctly predicted. Sensitivity measures out of all positive outcome, how many are correctly predicted. Specificty measure how many negative outcome is correctly predicted. Precision measures how many of our positive prediction is correct.
+
+```{r fig.align="center", echo=FALSE}
+knitr::include_graphics("./images/matrix_table.png")
+```
+
+
 ## Logisitic Regression
 
 We have make our logistic regression using all predict variable on dataset. Next this model use to predict with train dataset.
